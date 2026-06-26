@@ -330,8 +330,34 @@
   .nav-tab { font-size: 12px; padding: 16px 12px 14px; }
 }
 @media print {
-  .app-nav, .pdf-btn, .calc-btn, .l-actions, .input-card { display: none !important; }
-  .lease-results { opacity: 1 !important; transform: none !important; }
+  @page {
+    size: A4;
+    margin: 0;
+  }
+  html, body { margin: 0; padding: 0; }
+  .app-nav, .pdf-btn, .calc-btn, .l-actions, .input-card, .lease-footer,
+  .rescaler-page, #tab-rescaler { display: none !important; }
+  #tab-lease { display: block !important; }
+  .lease-page { background: #fff !important; min-height: unset; }
+  .lease-page::before { display: none; }
+  .lease-inner {
+    padding: 24px 28px !important;
+    max-width: 100% !important;
+  }
+  .lease-results {
+    opacity: 1 !important;
+    transform: none !important;
+    pointer-events: all !important;
+  }
+  .lease-page header { margin-bottom: 14px !important; padding-bottom: 14px !important; }
+  .lease-h1 { font-size: 28px !important; }
+  .breakdown-grid { gap: 8px !important; margin-bottom: 12px !important; }
+  .bk-card { padding: 12px !important; }
+  .bk-amount { font-size: 16px !important; }
+  .total-row { padding: 14px 18px !important; margin-bottom: 12px !important; }
+  .total-amount { font-size: 24px !important; }
+  .ledger-row { padding: 8px 14px !important; }
+  .results-header { margin-bottom: 10px !important; }
 }
 </style>
 </head>
