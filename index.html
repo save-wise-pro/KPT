@@ -397,7 +397,7 @@
       <div class="lease-subtitle">Stamp Duty &amp; Registration Fee Estimator · Kerala</div>
     </header>
 
-    <button class="pdf-btn" onclick="window.print()">⬇ Save as PDF</button>
+    <button class="pdf-btn" onclick="showPrintTip()">⬇ Save as PDF</button>
 
     <div class="input-card">
       <div class="input-row">
@@ -470,7 +470,7 @@
         <button class="btn-outline" onclick="copyResults()">⎘ Copy Summary</button>
         <button class="btn-outline" onclick="resetForm()">↺ Reset</button>
       </div>
-      <button class="pdf-btn" style="margin-top: 20px;" onclick="window.print()">⬇ Save as PDF</button>
+      <button class="pdf-btn" style="margin-top: 20px;" onclick="showPrintTip()">⬇ Save as PDF</button>
     </div>
 
     <div class="lease-footer">
@@ -908,5 +908,32 @@ function formatSize(bytes) {
 
 updateButtons();
 </script>
+<!-- Print Tip Modal -->
+<div id="printModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;padding:32px 28px;max-width:400px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,0.18);font-family:'Inter',sans-serif;position:relative;">
+    <div style="width:48px;height:48px;background:#fff8e6;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px;">💡</div>
+    <h2 style="text-align:center;font-size:17px;font-weight:700;margin-bottom:8px;color:#0f0e0b;">Before you save</h2>
+    <p style="font-size:13px;color:#555;text-align:center;margin-bottom:20px;line-height:1.6;">To remove the URL and date from your PDF, uncheck <strong>"Headers and footers"</strong> in the print dialog that opens next.</p>
+    <div style="background:#f5f0e8;border-radius:8px;padding:14px 16px;margin-bottom:20px;font-size:12px;color:#7a7060;line-height:1.7;">
+      <div>1. Click <strong>More settings</strong> (Chrome) or <strong>Page Setup</strong></div>
+      <div>2. Uncheck <strong>Headers and footers</strong></div>
+      <div>3. Set <strong>Destination</strong> → Save as PDF</div>
+      <div>4. Click <strong>Save</strong></div>
+    </div>
+    <button onclick="closePrintTip()" style="display:block;width:100%;padding:13px;background:#1a3a6b;color:#e8d5a3;border:none;border-radius:6px;font-size:13px;font-weight:600;letter-spacing:0.1em;cursor:pointer;margin-bottom:10px;">Got it — Open Print Dialog</button>
+    <button onclick="document.getElementById('printModal').style.display='none'" style="display:block;width:100%;padding:10px;background:transparent;color:#7a7060;border:none;font-size:12px;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<script>
+function showPrintTip() {
+  document.getElementById('printModal').style.display = 'flex';
+}
+function closePrintTip() {
+  document.getElementById('printModal').style.display = 'none';
+  setTimeout(() => window.print(), 100);
+}
+</script>
+
 </body>
 </html>
