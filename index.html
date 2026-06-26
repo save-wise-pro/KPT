@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kerala Property Tools</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── TAB NAV ── */
+.app-nav {
+  background: #fff;
+  border-bottom: 1.5px solid #e0ddd6;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+.app-nav-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 0;
+}
+.app-nav-brand {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a3a6b;
+  letter-spacing: -0.3px;
+  padding: 16px 20px 16px 0;
+  border-right: 1.5px solid #e0ddd6;
+  margin-right: 8px;
+  white-space: nowrap;
+}
+.nav-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 20px 16px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #7a7060;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-bottom: 2.5px solid transparent;
+  transition: all 0.2s;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+.nav-tab:hover { color: #1a3a6b; }
+.nav-tab.active { color: #1a3a6b; border-bottom-color: #c9a84c; font-weight: 600; }
+.nav-tab-icon {
+  width: 18px; height: 18px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+.nav-tab.active .nav-tab-icon, .nav-tab:hover .nav-tab-icon { opacity: 1; }
+
+/* ── PAGE SECTIONS ── */
+.page-section { display: none; }
+.page-section.active { display: block; }
+
+/* ════════════════════════════════
+   LEASE CALCULATOR STYLES
+════════════════════════════════ */
+.lease-page {
+  background: #f5f0e8;
+  min-height: calc(100vh - 57px);
+  position: relative;
+  overflow-x: hidden;
+}
+.lease-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+.lease-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+}
+
+/* Lease vars */
+.lease-page {
+  --ink: #0f0e0b;
+  --blue: #1a3a6b;
+  --blue-deep: #0f2444;
+  --paper: #f5f0e8;
+  --cream: #ede7d9;
+  --gold: #c9a84c;
+  --gold-light: #e8d5a3;
+  --rust: #8b3a2a;
+  --sage: #4a5c4e;
+  --muted: #7a7060;
+  --border: #d4c9b0;
+}
+
+.lease-page header {
+  text-align: center;
+  margin-bottom: 28px;
+  padding-bottom: 32px;
+  border-bottom: 1.5px solid #d4c9b0;
+  position: relative;
+}
+.lease-page header::after {
+  content: '◆';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #f5f0e8;
+  padding: 0 12px;
+  color: #c9a84c;
+  font-size: 12px;
+}
+.lease-eyebrow { font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; color: #7a7060; margin-bottom: 12px; }
+.lease-h1 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: clamp(32px, 6vw, 54px); font-weight: 900; line-height: 1.05; letter-spacing: -0.02em; color: #0f0e0b; margin-bottom: 10px; }
+.lease-h1 span { color: #c9a84c; }
+.lease-subtitle { font-size: 11px; color: #7a7060; letter-spacing: 0.12em; }
+
+.pdf-btn {
+  display: block; width: 100%; padding: 14px;
+  background: #1a3a6b; color: #e8d5a3;
+  font-family: 'Inter', sans-serif; font-size: 11px;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  border: none; border-radius: 3px; cursor: pointer;
+  transition: all 0.2s; margin-bottom: 28px;
+}
+.pdf-btn:hover { background: #0f2444; color: #c9a84c; }
+.pdf-btn:active { transform: scale(0.99); }
+
+.input-card {
+  background: #ede7d9; border: 1.5px solid #d4c9b0;
+  border-radius: 4px; padding: 36px 40px; margin-bottom: 32px;
+  position: relative;
+}
+.input-card::before {
+  content: ''; position: absolute;
+  top: 8px; left: 8px; right: -8px; bottom: -8px;
+  border: 1.5px solid #d4c9b0; border-radius: 4px; z-index: -1;
+}
+.field-label { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: #7a7060; display: block; margin-bottom: 8px; }
+.input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px; }
+.field-group { display: flex; flex-direction: column; }
+.input-wrap { display: flex; align-items: center; border: 1.5px solid #d4c9b0; border-radius: 3px; background: #f5f0e8; overflow: hidden; transition: border-color 0.2s; }
+.input-wrap:focus-within { border-color: #c9a84c; }
+.prefix { padding: 12px 14px; font-size: 13px; color: #7a7060; background: #ede7d9; border-right: 1.5px solid #d4c9b0; flex-shrink: 0; }
+.lease-page input[type="number"] { border: none; background: transparent; font-family: 'Inter', sans-serif; font-size: 15px; color: #0f0e0b; padding: 12px 14px; width: 100%; outline: none; }
+.lease-page input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+.lease-page select { width: 100%; border: 1.5px solid #d4c9b0; border-radius: 3px; background: #f5f0e8; font-family: 'Inter', sans-serif; font-size: 13px; color: #0f0e0b; padding: 12px 14px; outline: none; appearance: none; cursor: pointer; transition: border-color 0.2s; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a7060' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+.lease-page select:focus { border-color: #c9a84c; }
+.calc-btn { display: block; width: 100%; padding: 16px; background: #c9a84c; color: #0f0e0b; font-family: 'Inter', sans-serif; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; border: none; border-radius: 3px; cursor: pointer; transition: all 0.2s; margin-top: 4px; }
+.calc-btn:hover { background: #b8922a; color: #e8d5a3; }
+.calc-btn:active { transform: scale(0.99); }
+.rate-badge { display: inline-flex; align-items: center; gap: 8px; margin-top: 20px; padding: 8px 16px; background: #1a3a6b; color: #e8d5a3; font-size: 10px; letter-spacing: 0.15em; border-radius: 2px; opacity: 0; transform: translateY(6px); transition: all 0.3s; }
+.rate-badge.visible { opacity: 1; transform: translateY(0); }
+.rate-badge strong { font-size: 14px; }
+.lease-results { opacity: 0; transform: translateY(20px); transition: all 0.4s ease; pointer-events: none; }
+.lease-results.show { opacity: 1; transform: translateY(0); pointer-events: all; }
+.results-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 20px; }
+.results-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 22px; font-weight: 700; }
+.results-meta { font-size: 10px; color: #7a7060; letter-spacing: 0.1em; }
+.breakdown-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.bk-card { border: 1.5px solid #d4c9b0; border-radius: 3px; padding: 20px; background: #f5f0e8; position: relative; overflow: hidden; }
+.bk-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+.bk-card.primary::before { background: #c9a84c; }
+.bk-card.stamp::before { background: #8b3a2a; }
+.bk-card.reg::before { background: #4a5c4e; }
+.bk-label { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: #7a7060; margin-bottom: 10px; }
+.bk-amount { font-family: 'Plus Jakarta Sans', sans-serif; font-size: clamp(18px, 3vw, 26px); font-weight: 700; line-height: 1; margin-bottom: 6px; }
+.bk-card.primary .bk-amount { color: #c9a84c; }
+.bk-card.stamp .bk-amount { color: #8b3a2a; }
+.bk-card.reg .bk-amount { color: #4a5c4e; }
+.bk-pct { font-size: 10px; color: #7a7060; }
+.total-row { background: #1a3a6b; color: #f5f0e8; border-radius: 3px; padding: 24px 28px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.total-label { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: #e8d5a3; margin-bottom: 4px; }
+.total-amount { font-family: 'Plus Jakarta Sans', sans-serif; font-size: clamp(24px, 5vw, 38px); font-weight: 900; color: #c9a84c; }
+.total-note { font-size: 10px; color: #7a7060; text-align: right; line-height: 1.6; }
+.ledger { border: 1.5px solid #d4c9b0; border-radius: 3px; overflow: hidden; }
+.ledger-head { display: grid; grid-template-columns: 1.8fr 1fr 1fr 1fr 1fr; background: #1a3a6b; color: #e8d5a3; padding: 10px 20px; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; }
+.ledger-row { display: grid; grid-template-columns: 1.8fr 1fr 1fr 1fr 1fr; padding: 14px 20px; border-bottom: 1px solid #d4c9b0; font-size: 12px; transition: background 0.15s; align-items: center; }
+.ledger-row:last-child { border-bottom: none; }
+.ledger-row:hover { background: #ede7d9; }
+.ledger-row.active-row { background: #fdf6e3; border-left: 3px solid #c9a84c; }
+.ledger-row.active-row > * { font-weight: 500; }
+.tier-tag { display: inline-block; padding: 2px 8px; border-radius: 2px; font-size: 9px; letter-spacing: 0.1em; background: #ede7d9; border: 1px solid #d4c9b0; }
+.ledger-row.active-row .tier-tag { background: #c9a84c; color: #0f0e0b; border-color: #c9a84c; }
+.col-r { text-align: right; }
+.l-actions { display: flex; gap: 12px; margin-top: 20px; }
+.btn-outline { flex: 1; padding: 12px; border: 1.5px solid #d4c9b0; background: transparent; font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: #0f0e0b; border-radius: 3px; cursor: pointer; transition: all 0.2s; }
+.btn-outline:hover { border-color: #1a3a6b; background: #1a3a6b; color: #c9a84c; }
+.lease-footer { text-align: center; margin-top: 60px; padding-top: 24px; border-top: 1px solid #d4c9b0; font-size: 10px; color: #7a7060; letter-spacing: 0.1em; }
+
+/* ════════════════════════════════
+   RESCALER STYLES
+════════════════════════════════ */
+.rescaler-page {
+  background: #f2f2f7;
+  min-height: calc(100vh - 57px);
+  padding: 48px 16px 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.rescaler-page * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+
+.rsc-header { text-align: center; margin-bottom: 40px; animation: up .5s ease both; }
+.rsc-logo { width: 72px; height: 72px; background: linear-gradient(145deg,#007aff,#34aadc); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; box-shadow: 0 6px 24px rgba(0,122,255,.28); }
+.rsc-logo svg { width: 36px; height: 36px; color: #fff; }
+.rsc-h1 { font-size: 28px; font-weight: 700; letter-spacing: -.6px; margin-bottom: 6px; color: #1c1c1e; }
+.rsc-tagline { font-size: 15px; color: #8e8e93; font-weight: 400; }
+
+.rsc-card { background: #fff; border-radius: 16px; box-shadow: 0 2px 16px rgba(0,0,0,.07); width: 100%; max-width: 600px; overflow: hidden; }
+.drop-zone { position: relative; margin: 16px; border: 2px dashed #e5e5ea; border-radius: 10px; padding: 44px 24px; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: border-color .2s, background .2s; }
+.drop-zone:hover, .drop-zone.over { border-color: #007aff; background: #e8f2ff; }
+.drop-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.drop-icon { width: 52px; height: 52px; background: #e8f2ff; border-radius: 14px; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; transition: transform .2s; }
+.drop-zone:hover .drop-icon { transform: translateY(-3px); }
+.drop-icon svg { width: 24px; height: 24px; color: #007aff; }
+.drop-title { font-size: 16px; font-weight: 600; color: #1c1c1e; margin-bottom: 5px; }
+.drop-hint { font-size: 13px; color: #8e8e93; }
+.drop-hint b { color: #007aff; font-weight: 500; }
+.file-list { display: none; flex-direction: column; gap: 8px; padding: 0 16px 8px; }
+.file-list.visible { display: flex; }
+.file-row { display: flex; align-items: center; gap: 12px; background: #f2f2f7; border-radius: 10px; padding: 12px 14px; animation: up .25s ease both; position: relative; overflow: hidden; }
+.file-row-icon { width: 36px; height: 36px; flex-shrink: 0; background: #ffeceb; border-radius: 9px; display: flex; align-items: center; justify-content: center; }
+.file-row-icon svg { width: 18px; height: 18px; color: #ff3b30; }
+.file-row-info { flex: 1; min-width: 0; }
+.file-row-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #1c1c1e; }
+.file-row-meta { font-size: 11px; color: #8e8e93; margin-top: 2px; display: flex; align-items: center; gap: 6px; }
+.kerala-badge { display: inline-flex; align-items: center; gap: 3px; background: #e8f5ee; color: #1a6b3a; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 99px; }
+.kerala-badge svg { width: 10px; height: 10px; }
+.file-row-remove { width: 24px; height: 24px; flex-shrink: 0; border-radius: 50%; background: #e5e5ea; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .15s; }
+.file-row-remove:hover { background: #c6c6c8; }
+.file-row-remove svg { width: 10px; height: 10px; color: #8e8e93; }
+.file-row-progress { position: absolute; bottom: 0; left: 0; height: 2px; background: #007aff; width: 0%; transition: width .3s ease; border-radius: 0 0 0 10px; }
+.file-row-progress.done { background: #34c759; }
+.preview-panel { display: none; padding: 0 16px 16px; gap: 12px; }
+.preview-panel.visible { display: flex; }
+.preview-box { flex: 1; background: #f2f2f7; border-radius: 10px; overflow: hidden; border: 1px solid #e5e5ea; }
+.preview-label { font-size: 11px; font-weight: 600; color: #8e8e93; letter-spacing: .4px; text-transform: uppercase; padding: 8px 12px 6px; border-bottom: 1px solid #e5e5ea; background: #fff; }
+.preview-canvas-wrap { padding: 8px; display: flex; align-items: center; justify-content: center; min-height: 140px; background: #e5e5ea; }
+.preview-canvas-wrap canvas { max-width: 100%; max-height: 140px; object-fit: contain; box-shadow: 0 2px 8px rgba(0,0,0,.12); border-radius: 3px; }
+.preview-arrow { display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #007aff; padding-top: 40px; }
+.preview-arrow svg { width: 20px; height: 20px; }
+.rsc-divider { height: 1px; background: #e5e5ea; margin: 0 16px; }
+.info-strip { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; gap: 12px; flex-wrap: wrap; }
+.info-pill { display: inline-flex; align-items: center; gap: 5px; background: #e8f2ff; color: #007aff; font-size: 12px; font-weight: 500; padding: 5px 11px; border-radius: 99px; }
+.info-pill svg { width: 12px; height: 12px; }
+.info-note { font-size: 12px; color: #8e8e93; display: flex; align-items: center; gap: 5px; }
+.info-note svg { width: 13px; height: 13px; flex-shrink: 0; color: #007aff; }
+.rsc-actions { padding: 12px 16px 16px; display: flex; gap: 10px; }
+.rsc-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 600; letter-spacing: -.2px; border: none; cursor: pointer; transition: all .18s; }
+.rsc-btn svg { width: 17px; height: 17px; }
+.rsc-btn:disabled { opacity: .38; cursor: not-allowed; }
+.rsc-btn-primary { background: #007aff; color: #fff; }
+.rsc-btn-primary:hover:not(:disabled) { background: #0a84ff; transform: translateY(-1px); }
+.rsc-btn-primary:active:not(:disabled) { transform: scale(.98); }
+.rsc-btn-secondary { background: #f2f2f7; color: #3a3a3c; border: 1px solid #e5e5ea; }
+.rsc-btn-secondary:hover:not(:disabled) { background: #e5e5ea; }
+.global-progress { display: none; padding: 0 20px 16px; }
+.global-progress.visible { display: block; }
+.gp-row { display: flex; justify-content: space-between; font-size: 12px; color: #8e8e93; margin-bottom: 7px; }
+.gp-bar { height: 4px; background: #e5e5ea; border-radius: 4px; overflow: hidden; }
+.gp-fill { height: 100%; background: #007aff; border-radius: 4px; width: 0%; transition: width .3s; }
+.toast-wrap { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 999; pointer-events: none; align-items: center; }
+.toast { display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-radius: 12px; font-size: 13px; font-weight: 500; box-shadow: 0 4px 28px rgba(0,0,0,.10); animation: toastIn .3s ease both; pointer-events: auto; white-space: nowrap; }
+.toast.success { background: #34c759; color: #fff; }
+.toast.error { background: #ff3b30; color: #fff; }
+.toast.info { background: #1c1c1e; color: #fff; }
+.toast svg { width: 16px; height: 16px; flex-shrink: 0; }
+.toast.out { animation: toastOut .3s ease both; }
+.success-panel { display: none; flex-direction: column; align-items: center; padding: 40px 24px; text-align: center; }
+.success-panel.visible { display: flex; animation: up .4s ease both; }
+.success-ring { width: 64px; height: 64px; border-radius: 50%; background: #e8faf0; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+.success-ring svg { width: 30px; height: 30px; color: #34c759; stroke-dasharray: 40; stroke-dashoffset: 40; animation: draw .5s ease .1s forwards; }
+.success-title { font-size: 22px; font-weight: 700; letter-spacing: -.4px; margin-bottom: 6px; color: #1c1c1e; }
+.success-sub { font-size: 14px; color: #8e8e93; margin-bottom: 28px; max-width: 320px; line-height: 1.5; }
+.dl-list { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 360px; margin-bottom: 20px; }
+.dl-item { display: flex; align-items: center; gap: 10px; background: #f2f2f7; border-radius: 10px; padding: 11px 14px; text-align: left; text-decoration: none; color: #1c1c1e; border: 1px solid #e5e5ea; transition: background .15s; }
+.dl-item:hover { background: #e8f2ff; }
+.dl-item-icon { width: 32px; height: 32px; background: #e8f2ff; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.dl-item-icon svg { width: 16px; height: 16px; color: #007aff; }
+.dl-item-info { flex: 1; min-width: 0; }
+.dl-item-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dl-item-size { font-size: 11px; color: #8e8e93; }
+.btn-dl-all { display: flex; align-items: center; justify-content: center; gap: 8px; background: #007aff; color: #fff; border: none; border-radius: 99px; padding: 13px 32px; font-size: 15px; font-weight: 600; cursor: pointer; margin-bottom: 12px; transition: background .18s, transform .15s; }
+.btn-dl-all:hover { background: #0a84ff; transform: translateY(-1px); }
+.btn-dl-all svg { width: 16px; height: 16px; }
+.btn-again { background: none; border: none; color: #007aff; font-size: 13px; font-weight: 500; cursor: pointer; padding: 6px; }
+.rsc-footer { margin-top: 28px; font-size: 12px; color: #8e8e93; text-align: center; }
+.spinner { width: 17px; height: 17px; flex-shrink: 0; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
+
+/* ── ANIMATIONS ── */
+@keyframes up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+@keyframes toastIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateY(8px); } }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 580px) {
+  .input-card { padding: 24px 20px; }
+  .input-row { grid-template-columns: 1fr; }
+  .breakdown-grid { grid-template-columns: 1fr; }
+  .ledger-head, .ledger-row { grid-template-columns: 2fr 1fr 1fr; font-size: 11px; }
+  .ledger-head > :nth-child(4), .ledger-head > :nth-child(5),
+  .ledger-row > :nth-child(4), .ledger-row > :nth-child(5) { display: none; }
+  .total-row { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .rsc-actions { flex-direction: column; }
+  .preview-panel { flex-direction: column; }
+  .preview-arrow { padding-top: 0; transform: rotate(90deg); }
+  .app-nav-brand { display: none; }
+  .nav-tab { font-size: 12px; padding: 16px 12px 14px; }
+}
+@media print {
+  .app-nav, .pdf-btn, .calc-btn, .l-actions, .input-card { display: none !important; }
+  .lease-results { opacity: 1 !important; transform: none !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── TAB NAV ── -->
+<nav class="app-nav">
+  <div class="app-nav-inner">
+    <div class="app-nav-brand">Tools For MUJEEB</div>
+    <button class="nav-tab active" onclick="switchTab('lease', this)">
+      <svg class="nav-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="3" width="20" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/>
+      </svg>
+      Lease Duty Calculator
+    </button>
+    <button class="nav-tab" onclick="switchTab('rescaler', this)">
+      <svg class="nav-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <polyline points="9 15 12 18 15 15"/><line x1="12" y1="12" x2="12" y2="18"/>
+      </svg>
+      Pre-mutation Rescaler
+    </button>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════
+     PAGE 1 — LEASE CALCULATOR
+══════════════════════════════ -->
+<div class="page-section active" id="tab-lease">
+<div class="lease-page">
+  <div class="lease-inner">
+
+    <header>
+      <div class="lease-eyebrow">Property Registration</div>
+      <h1 class="lease-h1">Lease <span>Duty</span><br>Calculator</h1>
+      <div class="lease-subtitle">Stamp Duty &amp; Registration Fee Estimator · Kerala</div>
+    </header>
+
+    <button class="pdf-btn" onclick="window.print()">⬇ Save as PDF</button>
+
+    <div class="input-card">
+      <div class="input-row">
+        <div class="field-group">
+          <label class="field-label" for="amount">Total Lease Amount</label>
+          <div class="input-wrap">
+            <span class="prefix">₹</span>
+            <input type="number" id="amount" placeholder="e.g. 4060000" min="0" step="1000">
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="years">Lease Duration</label>
+          <select id="years">
+            <option value="" disabled selected>— Select Duration —</option>
+            <option value="1-5">1 – 5 Years</option>
+            <option value="5-10">5 – 10 Years</option>
+            <option value="10-20">10 – 20 Years</option>
+            <option value="20-30">20 – 30 Years</option>
+            <option value="30-100">30 – 100 Years</option>
+          </select>
+        </div>
+      </div>
+      <div id="rate-badge" class="rate-badge">
+        Applicable SD&amp;RF rate: <strong id="badge-rate">—</strong>
+      </div>
+      <button class="calc-btn" onclick="calculate()">Calculate Stamp Duty &amp; Registration Fee</button>
+    </div>
+
+    <div class="lease-results" id="results">
+      <div class="results-header">
+        <div class="results-title">Calculation Result</div>
+        <div class="results-meta" id="results-meta"></div>
+      </div>
+      <div class="breakdown-grid">
+        <div class="bk-card primary">
+          <div class="bk-label">SD&amp;RF Base (Calculated)</div>
+          <div class="bk-amount" id="r-sdrf">₹0</div>
+          <div class="bk-pct" id="r-sdrf-pct">— % of lease amount</div>
+        </div>
+        <div class="bk-card stamp">
+          <div class="bk-label">Stamp Duty (8% of base)</div>
+          <div class="bk-amount" id="r-stamp">₹0</div>
+          <div class="bk-pct" id="r-stamp-pct">—</div>
+        </div>
+        <div class="bk-card reg">
+          <div class="bk-label">Registration Fee (2% of base)</div>
+          <div class="bk-amount" id="r-reg">₹0</div>
+          <div class="bk-pct" id="r-reg-pct">—</div>
+        </div>
+      </div>
+      <div class="total-row">
+        <div>
+          <div class="total-label">Total Government Fees</div>
+          <div class="total-amount" id="r-total">₹0</div>
+        </div>
+        <div class="total-note" id="r-note"></div>
+      </div>
+      <div class="ledger">
+        <div class="ledger-head">
+          <div>Lease Term</div>
+          <div class="col-r">Rate</div>
+          <div class="col-r">SD&amp;RF Base</div>
+          <div class="col-r">Stamp Duty</div>
+          <div class="col-r">Reg. Fee</div>
+        </div>
+        <div id="ledger-body"></div>
+      </div>
+      <div class="l-actions">
+        <button class="btn-outline" onclick="window.print()">⎙ Print / Save PDF</button>
+        <button class="btn-outline" onclick="copyResults()">⎘ Copy Summary</button>
+        <button class="btn-outline" onclick="resetForm()">↺ Reset</button>
+      </div>
+      <button class="pdf-btn" style="margin-top: 20px;" onclick="window.print()">⬇ Save as PDF</button>
+    </div>
+
+    <div class="lease-footer">
+      Personal use only · Based on Kerala stamp duty slab rates · Figures are estimates
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════
+     PAGE 2 — RESCALER
+══════════════════════════════ -->
+<div class="page-section" id="tab-rescaler">
+<div class="rescaler-page">
+
+  <div class="rsc-header">
+    <div class="rsc-logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <polyline points="9 15 12 18 15 15"/>
+        <line x1="12" y1="12" x2="12" y2="18"/>
+      </svg>
+    </div>
+    <h1 class="rsc-h1">Pre-mutation Rescaler</h1>
+    <p class="rsc-tagline">Scale PDFs to print-ready size — instantly</p>
+  </div>
+
+  <div class="rsc-card" id="mainCard">
+    <div class="drop-zone" id="dropZone">
+      <input type="file" accept=".pdf" multiple id="fileInput">
+      <div class="drop-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+      </div>
+      <p class="drop-title">Drop PDFs here</p>
+      <p class="drop-hint">or <b>browse files</b> · multiple files supported</p>
+    </div>
+
+    <div class="file-list" id="fileList"></div>
+
+    <div class="preview-panel" id="previewPanel">
+      <div class="preview-box">
+        <div class="preview-label">Before</div>
+        <div class="preview-canvas-wrap"><canvas id="canvasBefore"></canvas></div>
+      </div>
+      <div class="preview-arrow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"/>
+          <polyline points="12 5 19 12 12 19"/>
+        </svg>
+      </div>
+      <div class="preview-box">
+        <div class="preview-label">After (61% scale)</div>
+        <div class="preview-canvas-wrap"><canvas id="canvasAfter"></canvas></div>
+      </div>
+    </div>
+
+    <div class="rsc-divider"></div>
+
+    <div class="info-strip">
+      <div class="info-pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
+          <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+        </svg>
+        Fixed 61% scale · A4 preserved
+      </div>
+      <div class="info-note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        Processed entirely in browser
+      </div>
+    </div>
+
+    <div class="global-progress" id="globalProgress">
+      <div class="gp-row">
+        <span id="progressLabel">Processing…</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="gp-bar"><div class="gp-fill" id="progressFill"></div></div>
+    </div>
+
+    <div class="rsc-actions" id="rscActions">
+      <button class="rsc-btn rsc-btn-secondary" id="clearBtn" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+          <path d="M10 11v6M14 11v6M9 6V4h6v2"/>
+        </svg>
+        Clear
+      </button>
+      <button class="rsc-btn rsc-btn-primary" id="convertBtn" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+          <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+        </svg>
+        Rescale PDF
+      </button>
+    </div>
+
+    <div class="success-panel" id="successPanel">
+      <div class="success-ring">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </div>
+      <div class="success-title">Rescaling Complete</div>
+      <div class="success-sub" id="successSub">Your PDFs have been scaled and are ready to download.</div>
+      <div class="dl-list" id="dlList"></div>
+      <button class="btn-dl-all" id="dlAllBtn" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Download All as ZIP
+      </button>
+      <button class="btn-again" id="againBtn">↩ Rescale more files</button>
+    </div>
+  </div>
+
+  <p class="rsc-footer">🔒 Files never leave your device · Built for MUJEEB RAHMAN T</p>
+</div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+// ── TAB SWITCHING ──
+function switchTab(id, btn) {
+  document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ══════════════════════════════
+// LEASE CALCULATOR LOGIC
+// ══════════════════════════════
+const TIERS = [
+  { label: '1 – 5 Years',    key: '1-5',    rate: 0.10 },
+  { label: '5 – 10 Years',   key: '5-10',   rate: 0.20 },
+  { label: '10 – 20 Years',  key: '10-20',  rate: 0.50 },
+  { label: '20 – 30 Years',  key: '20-30',  rate: 0.75 },
+  { label: '30 – 100 Years', key: '30-100', rate: 0.90 },
+];
+const STAMP_PCT = 0.08, REG_PCT = 0.02;
+
+function fmt(n) { return '₹' + Math.round(n).toLocaleString('en-IN'); }
+function fmtPct(n) { return (n * 100).toFixed(0) + '%'; }
+
+document.getElementById('years').addEventListener('change', function() {
+  const tier = TIERS.find(t => t.key === this.value);
+  const badge = document.getElementById('rate-badge');
+  if (tier) { document.getElementById('badge-rate').textContent = fmtPct(tier.rate) + ' of lease amount'; badge.classList.add('visible'); }
+  else badge.classList.remove('visible');
+});
+
+function calculate() {
+  const amount = parseFloat(document.getElementById('amount').value);
+  const key = document.getElementById('years').value;
+  if (!amount || amount <= 0) { alert('Please enter a valid lease amount.'); return; }
+  if (!key) { alert('Please select a lease duration.'); return; }
+  const tier = TIERS.find(t => t.key === key);
+  const base = amount * tier.rate, stamp = base * STAMP_PCT, reg = base * REG_PCT, total = stamp + reg;
+  document.getElementById('r-sdrf').textContent = fmt(base);
+  document.getElementById('r-sdrf-pct').textContent = fmtPct(tier.rate) + ' of ' + fmt(amount);
+  document.getElementById('r-stamp').textContent = fmt(stamp);
+  document.getElementById('r-stamp-pct').textContent = '= ' + fmtPct(STAMP_PCT) + ' × ' + fmt(base);
+  document.getElementById('r-reg').textContent = fmt(reg);
+  document.getElementById('r-reg-pct').textContent = '= ' + fmtPct(REG_PCT) + ' × ' + fmt(base);
+  document.getElementById('r-total').textContent = fmt(total);
+  document.getElementById('results-meta').textContent = tier.label + ' · ' + fmt(amount);
+  document.getElementById('r-note').innerHTML = 'Stamp Duty: ' + fmt(stamp) + '<br>Registration Fee: ' + fmt(reg) + '<br>Lease Amount: ' + fmt(amount);
+  let rows = '';
+  TIERS.forEach(t => {
+    const b = amount * t.rate, s = b * STAMP_PCT, r = b * REG_PCT;
+    const active = t.key === key ? 'active-row' : '';
+    rows += `<div class="ledger-row ${active}"><div><span class="tier-tag">${t.label}</span></div><div class="col-r">${fmtPct(t.rate)}</div><div class="col-r">${fmt(b)}</div><div class="col-r">${fmt(s)}</div><div class="col-r">${fmt(r)}</div></div>`;
+  });
+  document.getElementById('ledger-body').innerHTML = rows;
+  document.getElementById('results').classList.add('show');
+  setTimeout(() => document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+}
+
+function resetForm() {
+  document.getElementById('amount').value = '';
+  document.getElementById('years').value = '';
+  document.getElementById('rate-badge').classList.remove('visible');
+  document.getElementById('results').classList.remove('show');
+}
+
+function copyResults() {
+  const amt = parseFloat(document.getElementById('amount').value);
+  const key = document.getElementById('years').value;
+  if (!amt || !key) { alert('Nothing to copy yet.'); return; }
+  const tier = TIERS.find(t => t.key === key);
+  const base = amt * tier.rate, stamp = base * STAMP_PCT, reg = base * REG_PCT;
+  const text = ['LEASE DUTY CALCULATION','─────────────────────','Lease Amount : ' + fmt(amt),'Lease Term   : ' + tier.label,'SD&RF Rate   : ' + fmtPct(tier.rate),'─────────────────────','SD&RF Base   : ' + fmt(base),'Stamp Duty   : ' + fmt(stamp),'Reg. Fee     : ' + fmt(reg),'─────────────────────','TOTAL FEES   : ' + fmt(stamp + reg)].join('\n');
+  navigator.clipboard.writeText(text).then(() => alert('Copied to clipboard!')).catch(() => alert('Copy failed.'));
+}
+
+// ══════════════════════════════
+// RESCALER LOGIC
+// ══════════════════════════════
+const SCALE = 330 / 540;
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+let files = [], outputBlobs = [];
+
+const dropZone    = document.getElementById('dropZone');
+const fileInput   = document.getElementById('fileInput');
+const fileList    = document.getElementById('fileList');
+const previewPanel= document.getElementById('previewPanel');
+const canvasBefore= document.getElementById('canvasBefore');
+const canvasAfter = document.getElementById('canvasAfter');
+const globalProg  = document.getElementById('globalProgress');
+const progLabel   = document.getElementById('progressLabel');
+const progPct     = document.getElementById('progressPct');
+const progFill    = document.getElementById('progressFill');
+const convertBtn  = document.getElementById('convertBtn');
+const clearBtn    = document.getElementById('clearBtn');
+const successPanel= document.getElementById('successPanel');
+const dlList      = document.getElementById('dlList');
+const dlAllBtn    = document.getElementById('dlAllBtn');
+const againBtn    = document.getElementById('againBtn');
+const successSub  = document.getElementById('successSub');
+const rscActions  = document.getElementById('rscActions');
+const toastWrap   = document.getElementById('toastWrap');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('over'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('over'); addFiles([...e.dataTransfer.files]); });
+fileInput.addEventListener('change', () => addFiles([...fileInput.files]));
+
+function addFiles(newFiles) {
+  const pdfs = newFiles.filter(f => f.type === 'application/pdf' || f.name.endsWith('.pdf'));
+  const skipped = newFiles.length - pdfs.length;
+  if (skipped > 0) toast(`${skipped} non-PDF file(s) skipped`, 'error');
+  if (!pdfs.length) return;
+  pdfs.forEach(f => {
+    if (files.find(x => x.name === f.name && x.size === f.size)) return;
+    const entry = { file: f, name: f.name, size: f.size, isKerala: false, blob: null, outName: '' };
+    files.push(entry);
+    renderFileRow(entry);
+    detectKerala(entry);
+  });
+  updateButtons();
+  if (files.length >= 1) renderPreview(files[0].file);
+}
+
+function renderFileRow(entry) {
+  fileList.classList.add('visible');
+  const row = document.createElement('div');
+  row.className = 'file-row';
+  row.dataset.name = entry.name;
+  row.innerHTML = `
+    <div class="file-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+    <div class="file-row-info">
+      <div class="file-row-name">${entry.name}</div>
+      <div class="file-row-meta"><span>${formatSize(entry.size)}</span>
+        <span class="kerala-badge" id="badge-${CSS.escape(entry.name)}" style="display:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Kerala Revenue Doc
+        </span>
+      </div>
+    </div>
+    <button class="file-row-remove" data-name="${entry.name}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <div class="file-row-progress" id="prog-${CSS.escape(entry.name)}"></div>`;
+  row.querySelector('.file-row-remove').addEventListener('click', () => removeFile(entry.name));
+  fileList.appendChild(row);
+}
+
+async function detectKerala(entry) {
+  try {
+    const ab = await entry.file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
+    let text = '';
+    for (let i = 1; i <= Math.min(pdf.numPages, 2); i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      text += content.items.map(s => s.str).join(' ');
+    }
+    const keywords = ['LTIN','Thandaper','Bhoomi','Malappuram','Survey & Land','Pre-mutation','premutation','Revenue'];
+    if (keywords.filter(k => text.includes(k)).length >= 2) {
+      entry.isKerala = true;
+      const badge = document.getElementById('badge-' + CSS.escape(entry.name));
+      if (badge) badge.style.display = 'inline-flex';
+    }
+  } catch(e) {}
+}
+
+async function renderPreview(file) {
+  try {
+    const ab = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
+    const page = await pdf.getPage(1);
+    const vp = page.getViewport({ scale: 0.4 });
+    canvasBefore.width = vp.width; canvasBefore.height = vp.height;
+    await page.render({ canvasContext: canvasBefore.getContext('2d'), viewport: vp }).promise;
+    canvasAfter.width = vp.width; canvasAfter.height = vp.height;
+    const ctx = canvasAfter.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, vp.width, vp.height);
+    const sw = vp.width * SCALE, sh = vp.height * SCALE;
+    ctx.drawImage(canvasBefore, (vp.width - sw) / 2, (vp.height - sh) / 2, sw, sh);
+    previewPanel.classList.add('visible');
+  } catch(e) {}
+}
+
+function removeFile(name) {
+  files = files.filter(f => f.name !== name);
+  const row = fileList.querySelector(`[data-name="${name}"]`);
+  if (row) row.remove();
+  if (!files.length) { fileList.classList.remove('visible'); previewPanel.classList.remove('visible'); }
+  updateButtons();
+}
+
+clearBtn.addEventListener('click', () => {
+  files = []; fileList.innerHTML = ''; fileList.classList.remove('visible');
+  previewPanel.classList.remove('visible'); fileInput.value = ''; updateButtons();
+});
+
+function updateButtons() {
+  convertBtn.disabled = files.length === 0;
+  clearBtn.disabled = files.length === 0;
+  const svg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>`;
+  convertBtn.innerHTML = svg + ` Rescale ${files.length > 1 ? files.length + ' PDFs' : 'PDF'}`;
+}
+
+convertBtn.addEventListener('click', async () => {
+  if (!files.length) return;
+  convertBtn.innerHTML = '<div class="spinner"></div> Processing…';
+  convertBtn.disabled = true; clearBtn.disabled = true;
+  globalProg.classList.add('visible'); outputBlobs = [];
+  const total = files.length;
+  for (let i = 0; i < total; i++) {
+    const entry = files[i];
+    setProgress(Math.round((i / total) * 90), `Rescaling ${entry.name} (${i+1}/${total})…`);
+    const rowProg = document.getElementById('prog-' + CSS.escape(entry.name));
+    try {
+      const ab = await entry.file.arrayBuffer();
+      if (rowProg) rowProg.style.width = '30%';
+      const { PDFDocument } = PDFLib;
+      const pdfDoc = await PDFDocument.load(ab);
+      const pages = pdfDoc.getPages();
+      pages.forEach((page, pi) => {
+        const { width, height } = page.getSize();
+        page.scaleContent(SCALE, SCALE);
+        page.translateContent((width - width * SCALE) / 2, (135 / 843) * height);
+        if (rowProg) rowProg.style.width = (30 + Math.round(((pi+1)/pages.length)*50)) + '%';
+      });
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const outName = entry.name.replace(/\.pdf$/i, '') + '_rescaled.pdf';
+      entry.blob = blob; entry.outName = outName;
+      outputBlobs.push({ blob, outName, size: pdfBytes.byteLength });
+      if (rowProg) { rowProg.style.width = '100%'; rowProg.classList.add('done'); }
+    } catch(err) {
+      toast(`Failed: ${entry.name}`, 'error');
+    }
+  }
+  setProgress(100, 'Done!');
+  setTimeout(() => showSuccess(), 350);
+});
+
+function showSuccess() {
+  globalProg.classList.remove('visible');
+  rscActions.style.display = 'none'; dropZone.style.display = 'none';
+  fileList.style.display = 'none'; previewPanel.classList.remove('visible');
+  dlList.innerHTML = '';
+  outputBlobs.forEach(({ blob, outName, size }) => {
+    const url = URL.createObjectURL(blob);
+    const item = document.createElement('a');
+    item.className = 'dl-item'; item.href = url; item.download = outName;
+    item.innerHTML = `<div class="dl-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div><div class="dl-item-info"><div class="dl-item-name">${outName}</div><div class="dl-item-size">${formatSize(size)}</div></div>`;
+    dlList.appendChild(item);
+  });
+  const count = outputBlobs.length;
+  successSub.textContent = `${count} file${count > 1 ? 's' : ''} rescaled to 61% — ready to download.`;
+  if (count > 1) dlAllBtn.style.display = 'flex';
+  successPanel.classList.add('visible');
+  toast(`${count} PDF${count > 1 ? 's' : ''} rescaled successfully`, 'success');
+}
+
+dlAllBtn.addEventListener('click', async () => {
+  dlAllBtn.innerHTML = '<div class="spinner" style="border-color:rgba(255,255,255,.3);border-top-color:#fff"></div> Zipping…';
+  dlAllBtn.disabled = true;
+  try {
+    const zip = new JSZip();
+    outputBlobs.forEach(({ blob, outName }) => zip.file(outName, blob));
+    const content = await zip.generateAsync({ type: 'blob' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(content); a.download = 'rescaled_pdfs.zip'; a.click();
+    toast('ZIP downloaded!', 'success');
+  } catch(e) { toast('ZIP failed: ' + e.message, 'error'); }
+  dlAllBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download All as ZIP`;
+  dlAllBtn.disabled = false;
+});
+
+againBtn.addEventListener('click', () => {
+  files = []; outputBlobs = []; fileList.innerHTML = ''; fileInput.value = '';
+  fileList.classList.remove('visible'); previewPanel.classList.remove('visible');
+  successPanel.classList.remove('visible'); dlList.innerHTML = '';
+  dlAllBtn.style.display = 'none'; globalProg.classList.remove('visible');
+  rscActions.style.display = ''; dropZone.style.display = ''; fileList.style.display = '';
+  convertBtn.disabled = true; clearBtn.disabled = true; updateButtons();
+});
+
+function setProgress(pct, label) {
+  progFill.style.width = pct + '%'; progPct.textContent = pct + '%'; progLabel.textContent = label;
+}
+
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  const icons = {
+    success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>',
+    error:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+    info:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+  };
+  el.innerHTML = (icons[type] || '') + `<span>${msg}</span>`;
+  toastWrap.appendChild(el);
+  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 300); }, 3200);
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/1048576).toFixed(1) + ' MB';
+}
+
+updateButtons();
+</script>
+</body>
+</html>
